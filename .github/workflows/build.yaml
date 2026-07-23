@@ -5,6 +5,9 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     name: Build Executables
@@ -20,10 +23,10 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
@@ -39,12 +42,14 @@ jobs:
         pip install pyinstaller
 
     - name: Build Standalone Executable
+      shell: bash
       run: |
-        python -c "import glob; print(glob.glob('*.pyw'))"
-        pyinstaller --noconsole --onefile --name "${{ matrix.asset_name }}" *.pyw
+        SCRIPT_FILE=$(ls *.pyw | head -n 1)
+        echo "Found target script: $SCRIPT_FILE"
+        pyinstaller --noconsole --onefile --name "${{ matrix.asset_name }}" "$SCRIPT_FILE"
 
     - name: Upload Built Executable Artifact
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.asset_name }}
         path: dist/*
