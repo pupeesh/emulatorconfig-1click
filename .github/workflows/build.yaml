@@ -20,10 +20,10 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.11'
 
@@ -40,10 +40,11 @@ jobs:
 
     - name: Build Standalone Executable
       run: |
-        pyinstaller --noconsole --onefile --name "${{ matrix.asset_name }}" emulation-1click.pyw
+        python -c "import glob; print(glob.glob('*.pyw'))"
+        pyinstaller --noconsole --onefile --name "${{ matrix.asset_name }}" *.pyw
 
     - name: Upload Built Executable Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ matrix.asset_name }}
         path: dist/*
