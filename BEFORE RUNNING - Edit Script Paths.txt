@@ -1,0 +1,1 @@
+Check each scripts file that you need and change the file paths as per the instructions in each one.
