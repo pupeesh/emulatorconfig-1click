@@ -1,0 +1,10 @@
+# Dolphin Configuration Template
+GFX:
+  Backend: "$RENDERER"
+  InternalResolution: "$INTERNAL_RES"
+  AspectRatio: "1"
+
+Dolphin:
+  General:
+    EnableDualCore: "True"
+    GFXBackend: "$RENDERER"
