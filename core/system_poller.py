@@ -26,7 +26,7 @@ class SystemPoller:
                 return platform.processor() or os.getenv("PROCESSOR_IDENTIFIER", "Unknown CPU")
             elif os_type == "macos":
                 cmd = ["sysctl", "-n", "machdep.cpu.brand_string"]
-                return subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()
+                return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=2.0).decode().strip()
         except Exception:
             pass
         return platform.processor() or platform.machine() or "Unknown CPU"
@@ -45,13 +45,14 @@ class SystemPoller:
             elif os_type == "windows":
                 output = subprocess.check_output(
                     ["wmic", "os", "get", "TotalVisibleMemorySize"], 
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    timeout=2.0
                 )
                 kb = int(output.decode().split("\n")[1].strip())
                 return round(kb / (1024 * 1024), 1)
             elif os_type == "macos":
                 cmd = ["sysctl", "-n", "hw.memsize"]
-                bytes_mem = int(subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip())
+                bytes_mem = int(subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=2.0).decode().strip())
                 return round(bytes_mem / (1024**3), 1)
         except Exception:
             pass
@@ -63,7 +64,7 @@ class SystemPoller:
         try:
             if os_type == "linux":
                 output = subprocess.check_output(
-                    ["lspci"], stderr=subprocess.DEVNULL
+                    ["lspci"], stderr=subprocess.DEVNULL, timeout=2.0
                 ).decode()
                 for line in output.splitlines():
                     if "VGA" in line or "3D" in line:
@@ -71,14 +72,15 @@ class SystemPoller:
             elif os_type == "windows":
                 output = subprocess.check_output(
                     ["wmic", "path", "win32_VideoController", "get", "name"],
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    timeout=2.0
                 )
                 lines = [line.strip() for line in output.decode().split("\n") if line.strip()]
                 if len(lines) > 1:
                     return lines[1]
             elif os_type == "macos":
                 cmd = ["system_profiler", "SPDisplaysDataType"]
-                output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode()
+                output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=2.0).decode()
                 for line in output.splitlines():
                     if "Chipset Model:" in line:
                         return line.split("Chipset Model:")[1].strip()

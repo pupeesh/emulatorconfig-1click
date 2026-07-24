@@ -22,10 +22,16 @@ class ConfigWriter:
                 pass
 
         for section, keys in config_dict.items():
-            if not config.has_section(section):
-                config.add_section(section)
-            for k, v in keys.items():
-                config.set(section, str(k), str(v))
+            # Case-insensitive section matching to avoid duplicate sections like [gfx] and [GFX]
+            existing_section = next((s for s in config.sections() if s.lower() == str(section).lower()), None)
+            target_section = existing_section if existing_section else str(section)
+
+            if not config.has_section(target_section):
+                config.add_section(target_section)
+
+            if isinstance(keys, dict):
+                for k, v in keys.items():
+                    config.set(target_section, str(k), str(v))
 
         temp_path = f"{target_path}.tmp"
         with open(temp_path, "w", encoding="utf-8") as f:
@@ -43,6 +49,16 @@ class ConfigWriter:
     def write_cfg(target_path, updates_dict):
         """Non-destructively updates key = "value" pairs inside RetroArch .cfg files."""
         os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+        
+        # Flatten nested dictionaries if YAML section maps were passed directly
+        flat_dict = {}
+        for k, v in updates_dict.items():
+            if isinstance(v, dict):
+                flat_dict.update(v)
+            else:
+                flat_dict[k] = v
+        updates_dict = flat_dict
+
         lines = []
         existing_keys = set()
 
@@ -125,6 +141,15 @@ class ConfigWriter:
     def write_xml(target_path, updates_dict, root_tag="Content"):
         """Non-destructively updates nested tag values in XML files."""
         os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+
+        # Flatten nested dictionaries if section mappings were passed directly
+        flat_dict = {}
+        for k, v in updates_dict.items():
+            if isinstance(v, dict):
+                flat_dict.update(v)
+            else:
+                flat_dict[k] = v
+        updates_dict = flat_dict
 
         if os.path.exists(target_path):
             try:
