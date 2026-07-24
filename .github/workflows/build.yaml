@@ -24,55 +24,41 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Linux GUI dependencies setup for headless Tkinter
+      # Linux headless Tkinter display setup
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-tk xvfb
 
-      - name: Install Build Dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
 
-      # Run updated standardized unit tests
-      - name: Run Unit Tests (Linux Headless)
+      # Standardized Test Execution using Module Discovery
+      - name: Run Unit Tests (Linux)
         if: runner.os == 'Linux'
         run: |
-          xvfb-run python tests/test_config_writers.py
-          xvfb-run python tests/test_system_poller.py
-          xvfb-run python tests/test_backup_manager.py
-          xvfb-run python tests/test_emulator_resolver.py
+          PYTHONPATH=. xvfb-run python -m unittest discover -s tests -p "test_*.py"
 
       - name: Run Unit Tests (Windows / macOS)
         if: runner.os != 'Linux'
         run: |
-          python tests/test_config_writers.py
-          python tests/test_system_poller.py
-          python tests/test_backup_manager.py
-          python tests/test_emulator_resolver.py
+          python -m unittest discover -s tests -p "test_*.py"
+        env:
+          PYTHONPATH: .
 
-      # PyInstaller build step with modular subfolder bundling
+      # PyInstaller Standalone Build (Single-line to avoid shell syntax mismatch)
       - name: Build Standalone Executable (Windows)
         if: runner.os == 'Windows'
         run: |
-          pyinstaller --noconfirm --onedir --windowed `
-            --add-data "config_templates;config_templates" `
-            --add-data "core;core" `
-            --add-data "ui;ui" `
-            --name "EmulatorConfig-1Click" `
-            emulatorconfig-1click.pyw
+          pyinstaller --noconfirm --onedir --windowed --add-data "config_templates;config_templates" --add-data "core;core" --add-data "ui;ui" --name "EmulatorConfig-1Click" emulatorconfig-1click.pyw
 
       - name: Build Standalone Executable (Linux / macOS)
         if: runner.os != 'Windows'
         run: |
-          pyinstaller --noconfirm --onedir --windowed \
-            --add-data "config_templates:config_templates" \
-            --add-data "core:core" \
-            --add-data "ui:ui" \
-            --name "EmulatorConfig-1Click" \
-            emulatorconfig-1click.pyw
+          pyinstaller --noconfirm --onedir --windowed --add-data "config_templates:config_templates" --add-data "core:core" --add-data "ui:ui" --name "EmulatorConfig-1Click" emulatorconfig-1click.pyw
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
