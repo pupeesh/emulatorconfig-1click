@@ -16,10 +16,10 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: emulator-config-linux
-            asset_name: emulator-config-linux
           - os: windows-latest
             artifact_name: emulator-config-win.exe
-            asset_name: emulator-config-win.exe
+          - os: macos-latest
+            artifact_name: emulator-config-mac
 
     steps:
       - name: Checkout Repository
@@ -30,23 +30,23 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Dependencies & Headless Display Tools (Linux)
+      - name: Install System Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb python3-tk build-essential lspci
+          sudo apt-get install -y xvfb python3-tk build-essential pciutils
 
-      - name: Install PyInstaller
+      - name: Install Python Build Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
 
-      # --- Automated Unit Tests ---
+      # --- Run Unit Tests First ---
       - name: Run Core Engine Verification Tests
         run: |
           python tests/test_step1.py
 
-      # --- PyInstaller Compilation ---
+      # --- PyInstaller Compilation (OS Specific Path Separators) ---
       - name: Build Standalone Executable (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -57,6 +57,12 @@ jobs:
         run: |
           xvfb-run pyinstaller --noconsole --onefile --add-data "config_templates:config_templates" emulatorconfig-1click.pyw
 
+      - name: Build Standalone Binary (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconsole --onefile --add-data "config_templates:config_templates" emulatorconfig-1click.pyw
+
+      # --- Artifact Packaging ---
       - name: Organize Dist Artifacts
         shell: bash
         run: |
