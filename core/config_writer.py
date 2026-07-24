@@ -110,8 +110,20 @@ class ConfigWriter:
     # 4. XML Writer (Cemu)
     # -------------------------------------------------------------
     @staticmethod
+    def _find_or_create_element(root, path):
+        """Recursively finds or builds XML nodes for paths like 'Graphic/API'."""
+        parts = [p for p in path.split("/") if p]
+        curr = root
+        for part in parts:
+            child = curr.find(part)
+            if child is None:
+                child = ET.SubElement(curr, part)
+            curr = child
+        return curr
+
+    @staticmethod
     def write_xml(target_path, updates_dict, root_tag="Content"):
-        """Non-destructively updates tag values in XML files."""
+        """Non-destructively updates nested tag values in XML files."""
         os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
 
         if os.path.exists(target_path):
@@ -125,17 +137,13 @@ class ConfigWriter:
             root = ET.Element(root_tag)
             tree = ET.ElementTree(root)
 
-        # Apply key updates to XML elements
         for tag_path, val in updates_dict.items():
-            elem = root.find(tag_path)
-            if elem is None:
-                elem = ET.SubElement(root, tag_path)
+            elem = ConfigWriter._find_or_create_element(root, tag_path)
             elem.text = str(val)
 
         temp_path = f"{target_path}.tmp"
         tree.write(temp_path, encoding="utf-8", xml_declaration=True)
         
-        # Flush to disk
         with open(temp_path, "a", encoding="utf-8") as f:
             f.flush()
             os.fsync(f.fileno())

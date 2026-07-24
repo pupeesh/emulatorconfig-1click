@@ -39,20 +39,28 @@ class BackupManager:
             return None
 
     def _prune_old_backups(self):
-        """Enforces keeping only the 'max_backups' most recent snapshots."""
-        snapshots = sorted([
-            os.path.join(self.base_backup_dir, d)
-            for d in os.listdir(self.base_backup_dir)
-            if os.path.isdir(os.path.join(self.base_backup_dir, d)) and d.startswith("bak_")
-        ])
+        """Enforces keeping only the 'max_backups' most recent valid timestamped snapshots."""
+        valid_snapshots = []
+        for entry in os.listdir(self.base_backup_dir):
+            full_path = os.path.join(self.base_backup_dir, entry)
+            if os.path.isdir(full_path) and entry.startswith("bak_"):
+                # Strictly validate timestamp format to avoid pruning non-backup dirs
+                try:
+                    dt = datetime.strptime(entry, "bak_%Y%m%d_%H%M%S")
+                    valid_snapshots.append((dt, full_path))
+                except ValueError:
+                    continue
 
-        while len(snapshots) > self.max_backups:
-            oldest = snapshots.pop(0)
-            shutil.rmtree(oldest)
+        # Sort by creation date ascending
+        valid_snapshots.sort(key=lambda x: x[0])
+
+        while len(valid_snapshots) > self.max_backups:
+            _, oldest_path = valid_snapshots.pop(0)
+            shutil.rmtree(oldest_path, ignore_errors=True)
 
     def restore_snapshot(self, snapshot_path, destination_mappings):
         """
-        Restores files from a snapshot folder to target directories.
+        Restores files atomically from a snapshot folder to target directories.
         destination_mappings format:
         {
             "system-settings": "/path/to/emulator/Config",
@@ -71,7 +79,9 @@ class BackupManager:
                 for file_name in os.listdir(category_dir):
                     src_file = os.path.join(category_dir, file_name)
                     dst_file = os.path.join(target_dir, file_name)
+                    temp_dst = f"{dst_file}.tmp"
                     if os.path.isfile(src_file):
-                        shutil.copy2(src_file, dst_file)
+                        shutil.copy2(src_file, temp_dst)
+                        os.replace(temp_dst, dst_file)
                         restored_count += 1
         return restored_count > 0

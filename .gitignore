@@ -1,0 +1,14 @@
+# Python Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test Execution Vault / Dynamic Backups
+tests/mock_vault/bak_*
+
+# OS / Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

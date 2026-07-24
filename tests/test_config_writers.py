@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.config_writer import ConfigWriter
 
-def run_test():
+def test_config_writers():
     mock_base = os.path.abspath(os.path.join("tests", "mock_sys"))
 
     print("--- 1. Testing INI Writer (Dolphin / PCSX2) ---")
@@ -31,12 +31,12 @@ def run_test():
 
     print("--- 4. Testing XML Writer (Cemu) ---")
     xml_path = os.path.join(mock_base, "cemu", "settings.xml")
-    ConfigWriter.write_xml(xml_path, {"GraphicAPI": "Vulkan"})
+    ConfigWriter.write_xml(xml_path, {"Graphic/API": "Vulkan"})
     with open(xml_path) as f:
-        assert "<GraphicAPI>Vulkan</GraphicAPI>" in f.read()
+        assert "<API>Vulkan</API>" in f.read()
     print("  ✓ XML Writer passed")
 
-    print("\n All Multi-Format Config Writers Passed Successfully!")
+    print("\nAll Multi-Format Config Writers Passed Successfully!")
 
 if __name__ == "__main__":
-    run_test()
+    test_config_writers()

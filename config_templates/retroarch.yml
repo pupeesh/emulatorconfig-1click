@@ -1,0 +1,4 @@
+# RetroArch Flat Config Template
+video_driver: "$RENDERER"
+video_scale_integer: "false"
+rewind_enable: "false"

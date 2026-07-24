@@ -1,0 +1,3 @@
+# Cemu XML Config Template
+GraphicAPI: "$RENDERER"
+VSync: "True"

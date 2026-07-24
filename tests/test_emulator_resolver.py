@@ -1,7 +1,6 @@
 import os
 import sys
 
-# Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.emulator_resolver import EmulatorResolver
@@ -9,7 +8,7 @@ from core.system_poller import SystemPoller
 from core.yaml_engine import YAMLEngine
 from core.config_writer import ConfigWriter
 
-def run_test():
+def test_emulator_resolver_pipeline():
     print("--- 1. Hardware Spec Polling ---")
     sys_info = SystemPoller.get_hardware_info()
     print(f"OS: {sys_info['os']} ({sys_info['os_release']}) | CPU: {sys_info['cpu']}")
@@ -73,7 +72,7 @@ def run_test():
     assert detected_portable == mock_user_dir, "Portable mode resolution failed!"
     print("  -> Portable Mode detected successfully!")
 
-    print("\nStep 4 Complete Pipeline Test Passed Successfully!")
+    print("\nComplete Pipeline Test Passed Successfully!")
 
 if __name__ == "__main__":
-    run_test()
+    test_emulator_resolver_pipeline()

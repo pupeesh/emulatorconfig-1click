@@ -1,0 +1,5 @@
+# PCSX2 Configuration Template
+EmuCore/GS:
+  Renderer: "$RENDERER"
+  UpscaleMultiplier: "$INTERNAL_RES"
+  AspectRatio: "16:9"

@@ -1,12 +1,13 @@
 import os
 import sys
 import time
+import shutil
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.backup_manager import BackupManager
 
-def run_test():
+def test_backup_manager():
     print("--- 1. Setting up Mock Files ---")
     mock_sys_dir = os.path.abspath(os.path.join("tests", "mock_sys", "dolphin"))
     config_dir = os.path.join(mock_sys_dir, "Config")
@@ -30,7 +31,8 @@ def run_test():
     }
 
     print("--- 2. Testing Centralized Snapshot Creation & 5-Limit Pruning ---")
-    vault = BackupManager(base_backup_dir="tests/mock_vault", max_backups=5)
+    vault_dir = os.path.join("tests", "mock_vault")
+    vault = BackupManager(base_backup_dir=vault_dir, max_backups=5)
 
     last_snapshot = None
     for i in range(7):
@@ -38,7 +40,7 @@ def run_test():
         print(f"Created Snapshot {i+1}: {os.path.basename(last_snapshot)}")
         time.sleep(1.1)
 
-    snapshots_left = os.listdir("tests/mock_vault")
+    snapshots_left = [d for d in os.listdir(vault_dir) if d.startswith("bak_")]
     print(f"\nSnapshots currently stored in vault: {len(snapshots_left)} (Limit is 5)")
     assert len(snapshots_left) == 5, "Pruning failed! More than 5 backups found."
 
@@ -59,7 +61,10 @@ def run_test():
         print(f"Restored GFX.ini Content:\n{content}")
         assert "OpenGL" in content, "Restore failed! Content not reverted."
 
-    print(" Step 2 Backup & Auto-Pruning Engine Passed Successfully!")
+    print("\nBackup & Auto-Pruning Engine Passed Successfully!")
+
+    # Cleanup temporary test vault directory
+    shutil.rmtree(vault_dir, ignore_errors=True)
 
 if __name__ == "__main__":
-    run_test()
+    test_backup_manager()
