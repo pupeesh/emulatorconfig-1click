@@ -19,16 +19,16 @@ class EmulatorPathsFrame(ttk.LabelFrame):
         self._build_ui()
 
     def _build_ui(self):
-        canvas = tk.Canvas(self, bg="#181825", highlightthickness=0)
-        scroll = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scroll_frame = ttk.Frame(canvas)
+        self.canvas = tk.Canvas(self, highlightthickness=0)
+        scroll = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        scroll_frame = ttk.Frame(self.canvas)
 
-        scroll_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        c_win = canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
-        canvas.bind("<Configure>", lambda e: canvas.itemconfig(c_win, width=e.width))
-        canvas.configure(yscrollcommand=scroll.set)
+        scroll_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        c_win = self.canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfig(c_win, width=e.width))
+        self.canvas.configure(yscrollcommand=scroll.set)
 
-        canvas.grid(row=0, column=0, sticky="nsew")
+        self.canvas.grid(row=0, column=0, sticky="nsew")
         scroll.grid(row=0, column=1, sticky="ns")
         scroll_frame.columnconfigure(0, weight=1)
 
@@ -57,3 +57,8 @@ class EmulatorPathsFrame(ttk.LabelFrame):
             ttk.Button(btn_frame, text="Browse", style="Secondary.TButton", command=lambda v=path_var: self.on_browse_cb(v)).pack(side=tk.LEFT, padx=1)
             ttk.Button(btn_frame, text="Current config", style="Secondary.TButton", command=lambda k=key: self.on_config_cb(k)).pack(side=tk.LEFT, padx=1)
             ttk.Button(btn_frame, text="Backup configs", style="Secondary.TButton", command=lambda k=key: self.on_backup_cb(k)).pack(side=tk.LEFT, padx=1)
+
+    def update_canvas_bg(self, bg_color):
+        """Updates internal canvas background to match dark/light theme."""
+        if hasattr(self, 'canvas'):
+            self.canvas.configure(bg=bg_color)

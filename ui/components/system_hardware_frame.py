@@ -46,5 +46,5 @@ class SystemHardwareFrame(ttk.LabelFrame):
         ttk.Label(pref_frame, text="Target Res:").grid(row=1, column=0, sticky="w", padx=2, pady=2)
         ttk.Combobox(pref_frame, textvariable=self.res_var, values=["1x (Native/720p)", "2x (1080p/1440p)", "3x (3K/4K)"], state="readonly", width=12).grid(row=1, column=1, sticky="ew", padx=2, pady=2)
 
-        btn_auto = ttk.Button(self, text="🔍 Automatic Detection Scan", style="Success.TButton", command=self.on_detect_callback)
+        btn_auto = ttk.Button(self, text="Automatic Detection Scan", style="Success.TButton", command=self.on_detect_callback)
         btn_auto.grid(row=2, column=0, sticky="ew", pady=(6, 0))

@@ -4,12 +4,13 @@ import traceback
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-# Ensure modules can be imported
+# Ensure core & ui modules can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from core.system_poller import SystemPoller
 from core.emulator_resolver import EmulatorResolver
 from core.backup_manager import BackupManager
+from core.input_mapper import UniversalInputMapper
 
 from ui.styles import THEMES, apply_app_theme
 from ui.file_helpers import open_folder_in_explorer, browse_directory_dialog
@@ -24,8 +25,8 @@ class EmulatorConfigApp(tk.Tk):
         super().__init__()
 
         self.title("EmulatorConfig 1-Click")
-        self.geometry("980x720")
-        self.minsize(880, 600)
+        self.geometry("1020x720")
+        self.minsize(900, 600)
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -53,6 +54,7 @@ class EmulatorConfigApp(tk.Tk):
 
         self.emu_data = {}
         self.backup_mgr = BackupManager(base_backup_dir=".backups")
+        self.input_mapper = UniversalInputMapper()
 
         self._build_ui()
         self._apply_theme()
@@ -61,7 +63,8 @@ class EmulatorConfigApp(tk.Tk):
         main_container = ttk.Frame(self, padding="8")
         main_container.grid(row=0, column=0, sticky="nsew")
 
-        main_container.columnconfigure(0, weight=1)
+        # Column Weights: Quadrant 3 (Gamepad) gets 3x horizontal space vs Quadrant 4 (Console)
+        main_container.columnconfigure(0, weight=3)
         main_container.columnconfigure(1, weight=1)
         main_container.rowconfigure(0, weight=0)
         main_container.rowconfigure(1, weight=1)
@@ -75,10 +78,10 @@ class EmulatorConfigApp(tk.Tk):
         title_frame = ttk.Frame(top_bar)
         title_frame.grid(row=0, column=0, sticky="w")
 
-        ttk.Label(title_frame, text="⚡ EmulatorConfig 1-Click", style="Header.TLabel").pack(anchor="w")
+        ttk.Label(title_frame, text="EmulatorConfig 1-Click", style="Header.TLabel").pack(anchor="w")
         ttk.Label(title_frame, text="Configure system parameters, paths, and inputs automatically or manually.", style="Muted.TLabel").pack(anchor="w")
 
-        self.theme_btn = ttk.Button(top_bar, text="☀️ Light Mode", style="Secondary.TButton", command=self._toggle_theme)
+        self.theme_btn = ttk.Button(top_bar, text="Light Mode", style="Secondary.TButton", command=self._toggle_theme)
         self.theme_btn.grid(row=0, column=1, sticky="e")
 
         # Quadrant 1: System Hardware Frame
@@ -136,8 +139,10 @@ class EmulatorConfigApp(tk.Tk):
 
     def _apply_theme(self):
         colors = apply_app_theme(self, self.current_theme)
-        self.theme_btn.config(text="☀️ Light Mode" if self.current_theme == "dark" else "🌙 Dark Mode")
+        self.theme_btn.config(text="Light Mode" if self.current_theme == "dark" else "Dark Mode")
         self.quad4.update_log_theme(colors)
+        if hasattr(self, 'quad2'):
+            self.quad2.update_canvas_bg(colors["card_bg"])
         if hasattr(self, 'mapper_widget'):
             self.mapper_widget.update_theme(colors)
 
@@ -161,7 +166,12 @@ class EmulatorConfigApp(tk.Tk):
     def _on_device_changed(self, event=None):
         device_name = self.input_device_var.get()
         self.mapper_widget.set_preset_by_name(device_name)
-        self.log(f"Swapped gamepad layout to match: {device_name}")
+
+        # Auto bind layout translation on layout change
+        active_preset = self.mapper_widget.current_preset
+        auto_bindings = self.input_mapper.auto_bind_preset(active_preset)
+        self.mapper_widget.update_bindings(auto_bindings)
+        self.log(f"Swapped gamepad reference layout to: {device_name}")
 
     def _run_auto_detection(self):
         self.log("--- Starting Automatic Detection Scan ---")
@@ -180,11 +190,30 @@ class EmulatorConfigApp(tk.Tk):
                     self.emu_data[key]["path_var"].set(path)
                     self.log(f"Found {name}: {path}")
 
-        self.log("Scanned Inputs: Gamepad detected and mapped.")
+        # Auto-bind inputs for currently active controller canvas reference
+        active_preset = self.mapper_widget.current_preset
+        auto_bindings = self.input_mapper.auto_bind_preset(active_preset)
+        self.mapper_widget.update_bindings(auto_bindings)
+        self.log(f"Scanned Inputs: Assigned {len(auto_bindings)} default controls for [{active_preset.upper()}].")
+
         self._unlock_generate_button()
 
     def _remap_button(self, key, label):
-        self.log(f"Interactive Vector Mapper: Listening for input on {label} ({key})... Press button on controller.")
+        """Triggered when a user clicks a shape on the controller canvas."""
+        self.mapper_widget.set_listening_state(key)
+        self.log(f"Interactive Mapper: Waiting for hardware input on [{label}] ({key})... Press controller button.")
+
+        # Simulate non-blocking button capture (binds to active hardware mapper)
+        self.after(200, lambda: self._capture_hardware_input(key, label))
+
+    def _capture_hardware_input(self, key, label):
+        # Hardware capture callback
+        captured_code = self.input_mapper.active_bindings.get(key, "Btn 0")
+        self.input_mapper.set_custom_binding(key, captured_code)
+
+        self.mapper_widget.set_listening_state(None)
+        self.mapper_widget.update_bindings(self.input_mapper.active_bindings)
+        self.log(f"Interactive Mapper: Mapped [{label}] -> {captured_code}")
 
     def _browse_path(self, var):
         path = browse_directory_dialog(initial_dir=var.get())

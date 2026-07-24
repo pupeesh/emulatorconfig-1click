@@ -19,7 +19,7 @@ class ActivityConsoleFrame(ttk.LabelFrame):
 
         self.btn_generate = ttk.Button(
             self,
-            text="🚀 Generate Configurations (Locked)",
+            text="Generate Configurations",
             style="Primary.TButton",
             state="disabled",
             command=self.on_generate_callback
@@ -31,7 +31,7 @@ class ActivityConsoleFrame(ttk.LabelFrame):
         self.log_box.see(tk.END)
 
     def unlock_generate(self):
-        self.btn_generate.config(state="normal", text="🚀 Generate Configurations")
+        self.btn_generate.config(state="normal", text="Generate Configurations")
 
     def update_log_theme(self, theme_colors):
         self.log_box.configure(
